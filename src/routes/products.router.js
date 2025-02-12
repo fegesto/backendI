@@ -5,7 +5,8 @@ const productsRouter = express.Router();
 
 productsRouter.get("/products", async (req, res) => {
     const products = await ProductManager.getProducts();
-    res.status(200).send(products);
+    //res.status(200).send(products);
+    res.render("home", {products, title:"Productos"});
 });
 
 productsRouter.get("/products/:pid", async (req, res) => {

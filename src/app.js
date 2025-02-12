@@ -3,10 +3,16 @@ import ProductManager from "./productManager.js";
 import CartManager from "./cartManager.js";
 import productsRouter from "./routes/products.router.js";
 import cartsRouter from "./routes/carts.router.js";
+import {engine} from "express-handlebars";
+
 
 const app = express();
 app.use(express.json()); // Habilita el editado del JSON
 app.use(express.urlencoded({extended: true})); //enviar información por un formulario
+
+app.engine("handlebars", engine());
+app.set("view engine", "handlebars");
+app.set("views", "./src/views");
 
 //Products
 ProductManager.initialize().then(() => {

@@ -1,0 +1,17 @@
+{{!-- Productos agregados hasta el momento --}}
+<div>
+    <h1>Productos</h1>
+    <ul>
+        {{#each products}}
+            <li>{{title}}</li>
+                <ul>
+                    <li>Descripcion:{{description}}</li>
+                    <li>Codigo: {{code}}</li>
+                    <li>Precio: {{price}}</li>
+                    <li>Estado: {{status}}</li>
+                    <li>Imagen: {{thumbnail}}</li>
+                    <li>Stock: {{stock}}</li>
+                </ul>
+        {{/each}}
+    </ul>
+</div>

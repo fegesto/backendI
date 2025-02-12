@@ -3,7 +3,7 @@ import fs from "fs";
 class ProductManager {
 
     static products = [];
-    static path = "./products.json";
+    static path = "./src/products.json";
     constructor (path) {
         this.path = path;
     }
