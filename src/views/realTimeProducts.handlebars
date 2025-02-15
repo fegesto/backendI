@@ -1,1 +1,35 @@
 {{!-- Lista de productos que trabaja con websockets --}}
+<div>
+    <h1>Productos</h1>
+    <div id="products">
+                {{#each products}}
+            <li>{{title}}</li>
+                <ul>
+                    <li>Descripcion:{{description}}</li>
+                    <li>Codigo: {{code}}</li>
+                    <li>Precio: {{price}}</li>
+                    <li>Estado: {{status}}</li>
+                    <li>Imagen: {{thumbnail}}</li>
+                    <li>Stock: {{stock}}</li>
+                </ul>
+        {{/each}}
+    </div>
+
+    <div>
+        <h2>Agregar producto</h2>
+        <form id="productForm">
+            <input type="text" id="title" placeholder="Titulo">
+            <input type="text" id="description" placeholder="Descripcion">
+            <input type="text" id="code" placeholder="Código">
+            <input type="text" id="price" placeholder="Precio">
+            <input type="boolean" id="status" placeholder="Estado">
+            <input type="text" id="thumbnail" placeholder="Url de la imagen">
+            <input type="number" id="stock" placeholder="Stock">
+            <button type="submit" id="addProduct">Agregar</button>
+        </form>
+    </div>
+
+</div>
+
+<script src="../socket.io/socket.io.js"></script>
+<script src="/js/index.js"></script>
