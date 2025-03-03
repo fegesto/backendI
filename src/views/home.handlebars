@@ -1,20 +1,75 @@
-{{!-- Productos agregados hasta el momento --}}
-<div>
-    <h1>Productos</h1>
+    <h1>{{title}}</h1>
     <ul>
-        {{#each products}}
-            <li>{{title}}</li>
-                <ul>
-                    <li>Descripcion:{{description}}</li>
-                    <li>Codigo: {{code}}</li>
-                    <li>Precio: {{price}}</li>
-                    <li>Estado: {{status}}</li>
-                    <li>Imagen: {{thumbnail}}</li>
-                    <li>Stock: {{stock}}</li>
-                </ul>
+        {{#each response.payload}}
+            <li>
+                <h2>{{this.title}}</h2>
+                <p>{{this.description}}</p>
+                <p>Precio: ${{this.price}}</p>
+                <p>Categoría: {{this.category}}</p>
+                <p>Stock: {{this.stock}}</p>
+                <button class="addToCart" data-pid="{{this._id}}">Agregar al carrito</button>
+            </li>
         {{/each}}
     </ul>
-</div>
 
-<script src="../socket.io/socket.io.js"></script>
-<script src="../src/routes/products.router.js"></script>
+    
+    <div>
+        {{#if response.hasPrevPage}}
+            <a href="{{response.prevLink}}">Anterior</a>
+        {{/if}}
+        <p>Pagina {{response.page}} de {{response.totalPages}}</p>  
+        {{#if response.hasNextPage}}
+            <a href="{{response.nextLink}}">Siguiente</a>
+        {{/if}}
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+    let cartId = sessionStorage.getItem('cartId');
+
+    if (!cartId) {
+    fetch('/api/carts', {
+        method: 'POST',
+    })
+        .then(response => response.json())
+        .then(data => {
+        cartId = data._id;
+        sessionStorage.setItem('cartId', cartId);
+        attachEventListeners(cartId);
+        })
+        .catch(error => {
+        console.error('Error al crear el carrito:', error);
+        alert('Error al crear el carrito');
+        });
+    } else {
+    attachEventListeners(cartId);
+    }
+
+    function attachEventListeners(cid) {
+    const addToCartButtons = document.querySelectorAll('.addToCart');
+
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', async (event) => {
+        const pid = event.target.dataset.pid;
+
+        try {
+            const response = await fetch(`/api/carts/${cid}/products/${pid}`, {
+            method: 'POST',
+            });
+
+            if (response.ok) {
+            alert('Producto agregado al carrito');
+            } else {
+            const errorData = await response.json();
+            alert(`Error: ${errorData.message || 'No se pudo agregar el producto'}`);
+            }
+        } catch (error) {
+            console.error('Error al agregar el producto:', error);
+            alert('Error al agregar el producto');
+        }
+        });
+    });
+    }
+});
+</script>
+<script src="../src/routes/views.router.js"></script>

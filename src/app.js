@@ -7,7 +7,11 @@ import CartManager from "./cartManager.js";
 import productsRouter from "./routes/products.router.js";
 import cartsRouter from "./routes/carts.router.js";
 import viewsRouter from "./routes/views.router.js";
+import mongoose from "mongoose";
+import connectMongoDB from "../db/db.js";
+import dontenv from "dotenv";
 
+dontenv.config();
 
 const app = express();
 const server = http.createServer(app);
@@ -25,8 +29,7 @@ app.engine("handlebars", engine());
 app.set("view engine", "handlebars");
 app.set("views", "./src/views");
 
-app.use("/api", productsRouter);
-app.use("/", viewsRouter);
+connectMongoDB();
 
 
 io.on("connection", (socket) => {
@@ -41,21 +44,10 @@ io.on("productAdded", async () => {
     console.log("Productos enviados al cliente");
 });
 
-//Products
-ProductManager.initialize().then(() => {
-    
-    app.use("/api", productsRouter);
-});
-//Cart
+app.use("/", viewsRouter);
+app.use("/api", productsRouter);
+app.use("/api", cartsRouter);
 
-CartManager.initialize().then(() => {
-    
-    app.use("/api", cartsRouter);
-    
-});
-
-
-//Llamo al servidor
 server.listen(PORT, () => {
     console.log(`Servidor iniciado en: http://localhost:${PORT}`);
 });

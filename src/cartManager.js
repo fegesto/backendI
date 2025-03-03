@@ -1,94 +1,144 @@
-import fs from "fs";
+import mongoose from "mongoose";
+import Cart from "./models/cart.model.js";
+import Product from "./models/product.models.js";
 import ProductManager from "./productManager.js";
+
 
 class CartManager {
 
-    static carts = [];
-    static path = "./src/cart.json";
-    constructor (path) {
-        this.path = path;
-    }
-
-    //Inicializo
-    static initialize = async() => {
-        try{
-            const fileData = await fs.promises.readFile(this.path, "utf-8");
-            this.carts = JSON.parse(fileData);
-        } catch(er) {
-            console.error(er);
-        }
-    };
-
     //Crear carrito
-    static createCart = async (carts) => {
+    static async createCart () {
         try{
-            const id = this.carts.length + 1; //Id autoincrementable
-            const products = [];
-            const newCart = {id, products, ...carts};
-
-            this.carts.push(newCart);
-            await this.saveCarts();
+            const newCart = await Cart.create({products: []});
             return newCart;
         } catch(er) {
             console.error(er);
         }
     }
 
-    //Guardar carrito
-    static saveCarts = async () => {
+    //Buscar carrito por ID
+    static async getCartById (id) {
         try{
-            await fs.promises.writeFile(this.path, JSON.stringify(this.carts));
-        } catch(er) {
-            console.error(er);
-        }
-    }
-
-    //Buscar productos de carrito por ID
-    static getCartById = (id) =>{
-        try{
-        const cart = this.carts.find(cart => cart.id == Number(id));
+        const cart = await Cart.findById(id).populate("products.product").lean();
         if (!cart) {
-            return console.log("Not found");
+            return console.log("Carrito no encontrado");
         }
-        return cart.products;
+        return cart;
     } catch(er) {
         console.error(er);
     }}
 
     //Agrego productos al carrito
-    static updateCartProduct = async (cartId, productId) => {
+    static async updateCartProduct (cid, pid) {
         try {
-            await ProductManager.initialize();
-            const product = ProductManager.products.find(product => product.code == productId);
 
+            const product = await Product.findById(pid);
             if (!product) {
-                console.log("Producto no encontrado");
-                return;
+                return console.log("Producto no encontrado");
             }
 
-            const cartIndex = CartManager.carts.findIndex(cart => cart.id == Number(cartId));
-            if (cartIndex == -1) {
-                console.log("Carrito no encontrado");
-                return;
+            const cart = await Cart.findById(cid);
+            if (!cart) {
+                return console.log("Carrito no encontrado");
             }
 
-            const cart = CartManager.carts[cartIndex];
-
-            const productIndex = cart.products.findIndex(product => product.product == productId);
+            const productIndex = cart.products.findIndex(product => product.product == pid);
             if (productIndex == -1) {
-                cart.products.push({product: productId, quantity: 1});
+                cart.products.push({product: pid, quantity: 1});
             } else {
                 cart.products[productIndex].quantity++;
             }
 
-            await CartManager.saveCarts();
-            return cart;        
+            await cart.save();
+            return cart;    
         
         } catch (er) {
             console.error("Error al actualizar carrito:", er);
         }
     }
+
+    //Eliminar productos del carrito por ID
+    static async deleteCartProduct (cartId, productId) {
+        try {
+
+            const product = await Product.findById(productId);
+            if (!product) {
+                return console.log("Producto no encontrado");
+                return null;
+            }
+
+            const cart = await Cart.findById(cartId);
+            if (!cart) {
+                return console.log("Carrito no encontrado");
+                return null;
+            }
+
+            const productIndex = cart.products.findIndex(product => product.product == productId);
+            
+            if (productIndex === -1) {
+                console.log("El producto no está en el carrito");
+                return null;
+            }
+            cart.products.splice(productIndex, 1);
+
+            await cart.save();
+            return cart;    
+        
+        } catch (er) {
+            console.error("Error al actualizar carrito:", er);
+        }
+    }
+
+    //Actualizar carrito
+    static async updateCart(cartId, products) {
+        try {
+
+            const cart = await Cart.findByIdAndUpdate(
+                cartId, 
+                {products: products}, 
+                {new: true}
+            ).populate("products.product");
+            
+            return cart;
+
+        } catch (er) {
+            console.error(er);
+        }
+    }
+
+    //Actualizar cantidad de productos en carrito
+    static async updateCartProductQuantity (cartId, pid, quantity) {
+        try{
+            const cart = await Cart.findById(cartId);
+            if (!cart) return console.log("Carrito no encontrado");
+
+            const productIndex = cart.products.findIndex(product => product.product == pid);
+            if (productIndex == -1) return console.log("Producto no encontrado");
+
+            cart.products[productIndex].quantity = quantity;
+
+            await cart.save();
+            return cart;
+        }catch(er){
+            console.error(er);
+        }
+    }
+
+    //Vaciar carrito
+    static async deleteCart (cartId) {
+        try {
+
+            const cart = await Cart.findByIdAndUpdate(
+                cartId,
+                {products: []},
+                {new: true}
+            );
+            return cart;    
+        
+        } catch (er) {
+            console.error("Error al vaciar el carrito:", er);
+        }
+    }
 }
 
-const cartManager = new CartManager("cart.json");
 export default CartManager;

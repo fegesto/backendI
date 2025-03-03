@@ -1,17 +1,42 @@
 import express from "express";
+import mongoose from "mongoose";
+import Product from "../models/product.models.js";
 import ProductManager from "../productManager.js";
 
 
 const productsRouter = express.Router();
 
-productsRouter.get("/", async (req, res) => {
-    const products = await ProductManager.getProducts();
-    res.render("home", {products, title:"Productos"});
-});
-
 productsRouter.get("/products", async (req, res) => {
-    const products = await ProductManager.getProducts();
-    res.status(200).send(products);
+    try{
+        const {limit = 10, page = 1, sort, query} = req.query;
+
+        const options = {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            sort: sort === 'asc' ? {price: 1} : sort === 'desc' ? {price: -1} : undefined,
+        };
+
+        const filter = query ? {$text: {$search: query}} : {};
+
+        const products = await Product.paginate(filter, options);
+        const response = {
+            status: "success",
+            payload: products.docs,
+            totalPages: products.totalPages,
+            prevPage: products.prevPage,
+            nextPage: products.nextPage,
+            page: products.page,
+            hasPrevPage: products.hasPrevPage,
+            hasNextPage: products.hasNextPage,
+            prevLink: products.hasPrevPage ? `/products?limit=${limit}&page=${products.prevPage}&sort=${sort}&query=${query}` : null,
+            nextLink: products.hasNextPage ? `/products?limit=${limit}&page=${products.nextPage}&sort=${sort}&query=${query}` : null,
+        }
+        console.log(products);
+        res.status(200).send(response);
+
+        } catch(err){
+        res.status(500).send({status: "error", error: err.message});
+    }
 });
 
 productsRouter.get("/products/:pid", async (req, res) => {

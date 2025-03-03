@@ -1,103 +1,68 @@
-import fs from "fs";
+import Product from "./models/product.models.js";
 
 class ProductManager {
 
-    static products = [];
-    static path = "./src/products.json";
-    constructor (path) {
-        this.path = path;
-    }
-
-    static initialize = async() => {
+    //Agregar productos
+    static async addProduct (product) {
         try{
-            const fileData = await fs.promises.readFile(this.path, "utf-8");
-            this.products = JSON.parse(fileData);
+            const {code} = product;
+            const existingProduct = await Product.findOne({code});
+            if(existingProduct) return console.log("El producto ya existe");
+
+            const newProduct = await Product.create(product);
+            
+            return newProduct;
         } catch(er) {
             console.error(er);
         }
     };
 
-    static addProduct = async (product) => {
-        try{
-            const {code} = product;
-            const existingProduct = this.products.find(product => product.code == code);
-            if(existingProduct) return console.log("El producto ya existe");
-
-            const id = this.products.length + 1; //Id autoincrementable
-            const newProduct = {id, ...product};
-
-            this.products.push(newProduct);
-            await this.saveProducts();
-            return newProduct;
-        } catch(er) {
-            console.error(er);
-        }
-    }
-
-    static saveProducts = async () => {
-        try{
-            await fs.promises.writeFile(this.path, JSON.stringify(this.products));
-        } catch(er) {
-            console.error(er);
-        }
-    }
-
-    static getProducts = async () => {
+    //Obtener productos
+    static async getProducts() {
         try {
-            return this.products;
+            return await Product.find();
         } catch(er) {
             console.error(er);
         }
-    }
+    };
 
-    static getProductById = (id) =>{
+    //Obtener producto por ID
+    static async getProductById (id) {
         try{
-        const product = this.products.find(product => product.id == Number(id));
+        const product = await Product.findById(id);
         if (!product) {
             return console.log("Not found");
         }
         return product;
     } catch(er) {
         console.error(er);
-    }}
+    }};
 
-    static updateProduct = async (id, updateProduct) => {
+    //Actualizar producto
+    static async updateProduct (id, updateProduct) {
         try{
-            const productId = Number(id);
-
-            const productIndex = this.products.findIndex(product => product.id === productId);
-            if (productIndex == -1) {
-                console.log("Producto no encontrado");
-                return null;
-            }
-
-            const updatedProduct = {...this.products[productIndex], ...updateProduct};
-            this.products[productIndex] = updatedProduct;
-            
-            await this.saveProducts();
+        const updatedProduct = await Product.findByIdAndUpdate(id, updateProduct, {new: true});
+        if (!updatedProduct) {
+            return console.log("Producto no encontrado");
+        }
             return updatedProduct;
         }catch(er) {
             console.error(er);
         }
-    }
+    };
 
-    static deleteProduct = async (id) => {
+    //Eliminar producto
+    static async deleteProduct (id) {
         try{
-
-            const productId = Number(id);
-            const productIndex = this.products.findIndex(product => product.id === productId);
-            if (productIndex == -1) {
-                console.log("Producto no encontrado");
-                return;
+            const deleteProduct = await Product.findByIdAndDelete(id);
+            if (!deleteProduct) {
+                return console.log("Producto no encontrado");
             }
-            const deletedProduct = this.products.splice(productIndex, 1);
-            await this.saveProducts();
-            return deletedProduct[0]
+            return deleteProduct;
         }catch(er) {
             console.error(er);
         }
     }
 }
 
-const productManager = new ProductManager("products.json");
 export default ProductManager;
